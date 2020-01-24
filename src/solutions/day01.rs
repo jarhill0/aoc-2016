@@ -7,39 +7,21 @@ pub struct Day1 {}
 
 impl Solution for Day1 {
     fn part1(&self, input: String) {
-        use Direction::*;
+        let mut walker = Walker::new();
 
-        let mut x_offset = 0;
-        let mut y_offset = 0;
-        let mut direction = North;
-
-        for movement in input.split(", ") {
-            let (turn, magnitude) = movement.split_at(1);
-            let magnitude = int(magnitude).unwrap();
-
-            match turn {
-                "R" => direction = direction.right(),
-                "L" => direction = direction.left(),
-                _ => panic!("Bad direction."),
-            }
-
-            match direction {
-                East => x_offset += magnitude,
-                West => x_offset -= magnitude,
-                North => y_offset += magnitude,
-                South => y_offset -= magnitude,
-            }
+        for (turn, magnitude) in movements(&input) {
+            walker.turn(turn);
+            walker.walk(magnitude);
         }
-        println!("{}", x_offset.abs() + y_offset.abs());
+
+        println!("{}", walker.manhattan_dist());
     }
 
     fn part2(&self, input: String) {
         let mut walker = Walker::new();
         let mut visited: HashSet<(i32, i32)> = HashSet::new();
 
-        'outer: for movement in input.split(", ") {
-            let (turn, magnitude) = movement.split_at(1);
-            let magnitude = int(magnitude).unwrap();
+        'outer: for (turn, magnitude) in movements(&input) {
             walker.turn(turn);
             for _ in 0..magnitude {
                 if !visited.insert((walker.x, walker.y)) {
@@ -50,8 +32,15 @@ impl Solution for Day1 {
                 walker.walk(1);
             }
         }
-        println!("{}", walker.x.abs() + walker.y.abs());
+        println!("{}", walker.manhattan_dist());
     }
+}
+
+fn movements(input: &str) -> impl Iterator<Item = (&str, i32)> {
+    input.split(", ").map(|movement| {
+        let (turn, magnitude) = movement.split_at(1);
+        (turn, int(magnitude).unwrap())
+    })
 }
 
 struct Walker {
@@ -86,6 +75,10 @@ impl Walker {
             North => self.y += magnitude,
             South => self.y -= magnitude,
         }
+    }
+
+    fn manhattan_dist(&self) -> i32 {
+        self.x.abs() + self.y.abs()
     }
 }
 
