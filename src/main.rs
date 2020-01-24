@@ -3,6 +3,7 @@ use std::io::{stdin, Read};
 use std::process::exit;
 
 mod solutions;
+mod util;
 
 fn main() {
     let mut args = args();
