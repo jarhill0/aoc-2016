@@ -2,22 +2,10 @@ use crate::solutions::Solution;
 
 pub struct Day2 {}
 
-impl Solution for Day2 {
-    fn part1(&self, input: String) {
+impl Day2 {
+    fn run(&self, input: String, layout: impl Layout) {
         let mut code = String::new();
-        let mut key_pad = KeyPad::new();
-
-        for sequence in parse_input(&input) {
-            key_pad.steps(sequence);
-            code.push(key_pad.as_char());
-        }
-
-        println!("{}", code);
-    }
-
-    fn part2(&self, input: String) {
-        let mut code = String::new();
-        let mut key_pad = KeyPad::new();
+        let mut key_pad = KeyPad::new(layout);
 
         for sequence in parse_input(&input) {
             key_pad.steps(sequence);
@@ -28,14 +16,25 @@ impl Solution for Day2 {
     }
 }
 
-#[derive(Copy, Clone)]
-struct KeyPad {
-    digit: u32,
+impl Solution for Day2 {
+    fn part1(&self, input: String) {
+        self.run(input, Square::new());
+    }
+
+    fn part2(&self, input: String) {
+        self.run(input, Diamond::new());
+    }
 }
 
-impl KeyPad {
-    fn new() -> KeyPad {
-        KeyPad { digit: 5 }
+#[derive(Copy, Clone)]
+struct KeyPad<T: Layout> {
+    digit: u32,
+    layout: T,
+}
+
+impl<T: Layout> KeyPad<T> {
+    fn new(layout: T) -> KeyPad<T> {
+        KeyPad { digit: 5, layout }
     }
 
     fn steps(&mut self, directions: impl Iterator<Item = Direction>) {
@@ -47,50 +46,109 @@ impl KeyPad {
     fn step(&mut self, direction: Direction) {
         use Direction::*;
 
-        match direction {
-            Up => self.up(),
-            Down => self.down(),
-            Right => self.right(),
-            Left => self.left(),
+        self.digit = match direction {
+            Up => self.layout.up(self.digit),
+            Down => self.layout.down(self.digit),
+            Right => self.layout.right(self.digit),
+            Left => self.layout.left(self.digit),
         }
     }
 
     fn as_char(&self) -> char {
         std::char::from_digit(self.digit, 16).unwrap()
     }
+}
 
-    fn up(&mut self) {
-        self.digit = match self.digit {
-            5 | 2 | 1 | 4 | 9 => self.digit,
+trait Layout {
+    fn up(&self, digit: u32) -> u32;
+    fn down(&self, digit: u32) -> u32;
+    fn left(&self, digit: u32) -> u32;
+    fn right(&self, digit: u32) -> u32;
+}
+
+struct Square {}
+
+impl Square {
+    fn new() -> Square {
+        Square {}
+    }
+}
+
+impl Layout for Square {
+    fn up(&self, digit: u32) -> u32 {
+        if digit > 3 {
+            digit - 3
+        } else {
+            digit
+        }
+    }
+
+    fn down(&self, digit: u32) -> u32 {
+        if digit < 7 {
+            digit + 3
+        } else {
+            digit
+        }
+    }
+
+    fn right(&self, digit: u32) -> u32 {
+        if digit % 3 != 0 {
+            digit + 1
+        } else {
+            digit
+        }
+    }
+
+    fn left(&self, digit: u32) -> u32 {
+        if digit % 3 != 1 {
+            digit - 1
+        } else {
+            digit
+        }
+    }
+}
+
+struct Diamond {}
+
+impl Diamond {
+    fn new() -> Diamond {
+        Diamond {}
+    }
+}
+
+impl Layout for Diamond {
+    fn up(&self, digit: u32) -> u32 {
+        match digit {
+            5 | 2 | 1 | 4 | 9 => digit,
             3 => 1,
-            6 | 7 | 8 | 0xa | 0xb | 0xc => self.digit - 4,
-            0xd => 0xb,
+            6 | 7 | 8 | 0xA | 0xB | 0xC => digit - 4,
+            0xD => 0xB,
             _ => panic!("unreachable"),
         }
     }
 
-    fn down(&mut self) {
-        self.digit = match self.digit {
-            5 | 0xa | 0xd | 0xc | 9 => self.digit,
+    fn down(&self, digit: u32) -> u32 {
+        match digit {
+            5 | 0xA | 0xD | 0xC | 9 => digit,
             0xB => 0xD,
-            2 | 3 | 4 | 6 | 7 | 8 => self.digit + 4,
+            2 | 3 | 4 | 6 | 7 | 8 => digit + 4,
             1 => 3,
             _ => panic!("unreachable"),
         }
     }
 
-    fn right(&mut self) {
-        self.digit = match self.digit {
-            1 | 4 | 9 | 0xC | 0xD => self.digit,
-            8 | 7 | 6 | 5 | 3 | 2 | 0xA | 0xB => self.digit + 1,
+    fn right(&self, digit: u32) -> u32 {
+        match digit {
+            1 | 4 | 9 | 0xC | 0xD => digit,
+            8 | 7 | 6 | 5 | 3 | 2 | 0xA | 0xB => digit + 1,
             _ => panic!("unreachable"),
         }
     }
 
-    fn left(&mut self) {
-        self.digit = match self.digit {
-            1 | 2 | 5 | 0xA | 0xD => self.digit,
-            3 | 4 | 6 | 7 | 8 | 9 | 0xB | 0xC => self.digit - 1,
+    fn left(&self, digit: u32) -> u32 {
+        match digit {
+            1 | 2 | 5 | 0xA | 0xD => digit,
+            3 | 4 | 6 | 7 | 8 | 9 | 0xB | 0xC => digit - 1,
             _ => panic!("unreachable"),
         }
     }
