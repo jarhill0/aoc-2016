@@ -17,11 +17,29 @@ impl Solution for Day4 {
         println!("{}", total);
     }
 
-    fn part2(&self, _input: String) {}
+    fn part2(&self, input: String) {
+        for room in input.split('\n').map(Room::new) {
+            let shift_by = room.sector_id;
+            let shifted: String = room.name.chars().map(|c| shift(c, shift_by)).collect();
+            if "northpole object storage" == shifted {
+                println!("{}", room.sector_id);
+                break;
+            }
+        }
+    }
+}
+
+fn shift(c: char, by: i32) -> char {
+    if c == '-' {
+        return ' ';
+    }
+    let c = c as i32 - 'a' as i32;
+    let c = (c + by) % 26;
+    ('a' as i32 + c) as u8 as char
 }
 
 struct Room<'a> {
-    name: Vec<&'a str>,
+    name: &'a str,
     checksum: &'a str,
     sector_id: i32,
 }
@@ -30,7 +48,7 @@ impl Room<'_> {
     fn new(room: &str) -> Room {
         let mut parts = room.rsplitn(2, '-');
         let mut end = parts.next().unwrap().split('[');
-        let name = parts.next().unwrap().split('-').collect();
+        let name = parts.next().unwrap();
         let sector_id = int(end.next().unwrap()).unwrap();
         let checksum = end.next().unwrap();
         let checksum = &checksum[..checksum.len() - 1];
@@ -43,10 +61,8 @@ impl Room<'_> {
 
     fn calculate_checksum(&self) -> String {
         let mut counts = HashMap::new();
-        for section in self.name.iter() {
-            for c in section.chars() {
-                counts.insert(c, 1 + counts.get(&c).unwrap_or(&0));
-            }
+        for c in self.name.chars().filter(|&c| c != '-') {
+            counts.insert(c, 1 + counts.get(&c).unwrap_or(&0));
         }
 
         let mut counts: Vec<(&u32, &char)> = counts.iter().map(|(a, b)| (b, a)).collect();
