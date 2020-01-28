@@ -9,7 +9,12 @@ impl Solution for Day12 {
         println!("{}", vm.a);
     }
 
-    fn part2(&self, _input: String) {}
+    fn part2(&self, input: String) {
+        let mut vm = VM::new(input.split('\n').filter_map(Instruction::new).collect());
+        vm.c = 1;
+        vm.run();
+        println!("{}", vm.a);
+    }
 }
 
 #[derive(Debug)]
