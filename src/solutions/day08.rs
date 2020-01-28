@@ -5,17 +5,25 @@ const HEIGHT: usize = 6;
 
 pub struct Day8 {}
 
+fn render_screen(input: String) -> Screen {
+    let mut screen = Screen::new();
+    input
+        .split('\n')
+        .filter_map(Operation::new)
+        .for_each(|op| screen.operate(op));
+    screen
+}
+
 impl Solution for Day8 {
     fn part1(&self, input: String) {
-        let mut screen = Screen::new();
-        input
-            .split('\n')
-            .filter_map(Operation::new)
-            .for_each(|op| screen.operate(op));
+        let screen = render_screen(input);
         println!("{}", screen.count_on());
     }
 
-    fn part2(&self, _input: String) {}
+    fn part2(&self, input: String) {
+        let screen = render_screen(input);
+        screen.print();
+    }
 }
 
 struct Screen {
@@ -70,6 +78,14 @@ impl Screen {
             .flatten()
             .filter(|&&b| b)
             .count()
+    }
+
+    fn print(&self) {
+        self.pixels.iter().for_each(|row| {
+            row.iter()
+                .for_each(|&b| print!("{}", if b { '#' } else { ' ' }));
+            println!();
+        });
     }
 }
 
