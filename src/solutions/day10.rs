@@ -6,34 +6,52 @@ pub struct Day10 {}
 
 impl Solution for Day10 {
     fn part1(&self, input: String) {
-        let mut bots = Bots::new();
+        let mut bots = Bots::new(true);
         for instruction in input.split('\n').map(Instruction::new) {
             bots.take_instruction(instruction);
         }
     }
 
-    fn part2(&self, _input: String) {}
+    fn part2(&self, input: String) {
+        let mut bots = Bots::new(false);
+        for instruction in input.split('\n').map(Instruction::new) {
+            bots.take_instruction(instruction);
+        }
+        let product = bots.output_0.unwrap() * bots.output_1.unwrap() * bots.output_2.unwrap();
+        println!("{}", product);
+    }
 }
 
 struct Bots {
     bots: HashMap<u32, Bot>,
     pending: Vec<Instruction>,
     crucial_pair: (u32, u32),
+    print_crucial: bool,
+
+    output_0: Option<u32>,
+    output_1: Option<u32>,
+    output_2: Option<u32>,
 }
 
 impl Bots {
-    fn new() -> Bots {
+    fn new(print_crucial: bool) -> Bots {
         Bots {
             bots: HashMap::new(),
             pending: Vec::new(),
             crucial_pair: (61, 17),
+            print_crucial,
+
+            output_0: None,
+            output_1: None,
+            output_2: None,
         }
     }
 
     #[allow(clippy::map_entry)]
     fn get_mut(&mut self, num: u32) -> &mut Bot {
         if !self.bots.contains_key(&num) {
-            self.bots.insert(num, Bot::new(num, self.crucial_pair));
+            self.bots
+                .insert(num, Bot::new(num, self.crucial_pair, self.print_crucial));
         }
         self.bots.get_mut(&num).unwrap()
     }
@@ -44,13 +62,18 @@ impl Bots {
         while !self.pending.is_empty() {
             let instruction = self.pending.pop().unwrap();
             let result = match instruction {
-                Instruction::Give { chip, target } => {
-                    if let Target::Bot(bot) = target {
-                        self.get_mut(bot).accept(chip)
-                    } else {
+                Instruction::Give { chip, target } => match target {
+                    Target::Bot(bot) => self.get_mut(bot).accept(chip),
+                    Target::Output(output) => {
+                        match output {
+                            0 => self.output_0 = Some(chip),
+                            1 => self.output_1 = Some(chip),
+                            2 => self.output_2 = Some(chip),
+                            _ => (),
+                        }
                         None
                     }
-                }
+                },
                 Instruction::SetTargets { bot, low, high } => {
                     self.get_mut(bot).set_targets(low, high)
                 }
@@ -124,19 +147,21 @@ struct Bot {
 
     targets: Option<(Target, Target)>,
     interesting_chips: (u32, u32),
+    print_interesting: bool,
     number: u32,
 }
 
 type Gifts = ((Target, u32), (Target, u32));
 
 impl Bot {
-    fn new(number: u32, interesting_chips: (u32, u32)) -> Bot {
+    fn new(number: u32, interesting_chips: (u32, u32), print_interesting: bool) -> Bot {
         Bot {
             chip_a: None,
             chip_b: None,
             targets: None,
             number,
             interesting_chips: pair_sort(interesting_chips.0, interesting_chips.1),
+            print_interesting,
         }
     }
 
@@ -160,7 +185,7 @@ impl Bot {
         if let Some((low_target, high_target)) = self.targets {
             if let (Some(a), Some(b)) = (self.chip_a, self.chip_b) {
                 let (low, high) = pair_sort(a, b);
-                if (low, high) == self.interesting_chips {
+                if self.print_interesting && (low, high) == self.interesting_chips {
                     println!("{}", self.number);
                 }
 
