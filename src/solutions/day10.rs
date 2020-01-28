@@ -24,7 +24,6 @@ impl Solution for Day10 {
 
 struct Bots {
     bots: HashMap<u32, Bot>,
-    pending: Vec<Instruction>,
     crucial_pair: (u32, u32),
     print_crucial: bool,
 
@@ -37,7 +36,6 @@ impl Bots {
     fn new(print_crucial: bool) -> Bots {
         Bots {
             bots: HashMap::new(),
-            pending: Vec::new(),
             crucial_pair: (61, 17),
             print_crucial,
 
@@ -57,10 +55,10 @@ impl Bots {
     }
 
     fn take_instruction(&mut self, instruction: Instruction) {
-        self.pending.push(instruction);
+        let mut pending = vec![instruction];
 
-        while !self.pending.is_empty() {
-            let instruction = self.pending.pop().unwrap();
+        while !pending.is_empty() {
+            let instruction = pending.pop().unwrap();
             let result = match instruction {
                 Instruction::Give { chip, target } => match target {
                     Target::Bot(bot) => self.get_mut(bot).accept(chip),
@@ -82,8 +80,8 @@ impl Bots {
             if let Some((gift_1, gift_2)) = result {
                 let gift_1 = Instruction::from(gift_1);
                 let gift_2 = Instruction::from(gift_2);
-                self.pending.push(gift_1);
-                self.pending.push(gift_2);
+                pending.push(gift_1);
+                pending.push(gift_2);
             }
         }
     }
