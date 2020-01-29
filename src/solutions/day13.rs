@@ -10,7 +10,10 @@ impl Solution for Day13 {
         println!("{}", bfs(fav_num));
     }
 
-    fn part2(&self, _input: String) {}
+    fn part2(&self, input: String) {
+        let fav_num = input.parse().unwrap();
+        println!("{}", bfs2(fav_num, 50));
+    }
 }
 
 fn bfs(fav_num: u32) -> u32 {
@@ -23,6 +26,34 @@ fn bfs(fav_num: u32) -> u32 {
         if pos == (31, 39) {
             return dist;
         }
+
+        for adjacent in surroundings(pos)
+            .iter()
+            .filter_map(|&x| x)
+            .filter(|&adj| !is_wall(adj, fav_num))
+        {
+            if !visited.contains(&adjacent) {
+                visited.insert(adjacent);
+                queue.push_back((adjacent, dist + 1));
+            }
+        }
+    }
+}
+
+fn bfs2(fav_num: u32, desired_dist: u32) -> u32 {
+    let mut total_spots = 0;
+
+    let mut visited = HashSet::new();
+    visited.insert((1, 1));
+    let mut queue = VecDeque::new();
+    queue.push_back(((1, 1), 0));
+    loop {
+        let (pos, dist) = queue.pop_front().unwrap();
+        if dist > desired_dist {
+            return total_spots;
+        }
+
+        total_spots += 1;
 
         for adjacent in surroundings(pos)
             .iter()
